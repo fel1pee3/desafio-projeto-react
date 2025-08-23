@@ -2,15 +2,22 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { LoginPage } from './pages/auth/LoginPage';
+import { ChamadosListPage } from './pages/chamados/ChamadosListPage';
+import { ChamadoDetailPage } from './pages/chamados/ChamadoDetailPage';
+import { NovoChamadoPage } from './pages/chamados/NovoChamadoPage';
+import { ErrorBoundary } from './components/ErrorBoundary';
+import { Layout } from './components/Layout/Layout';
+import { AtendimentoDetailPage } from './pages/atendimentos/AtendimentoDetailPage';
+import { AtendimentosListPage } from './pages/atendimentos/AtendimentosListPage';
+import { NovoAtendimentoPage } from './pages/atendimentos/NovoAtendimentoPage';
 
 // Componentes placeholder para as próximas páginas
-const ChamadosPage = () => <div className="p-8">Página de Chamados - Em desenvolvimento</div>;
-const AtendimentosPage = () => <div className="p-8">Página de Atendimentos - Em desenvolvimento</div>;
+// const ChamadosPage = () => <div className="p-8">Página de Chamados - Em desenvolvimento</div>;
 
 // Componente protegido
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const token = localStorage.getItem('authToken');
-  return token ? <>{children}</> : <Navigate to="/login" />;
+  return token ? <Layout>{children}</Layout> : <Navigate to="/login" />;
 };
 
 function App() {
@@ -24,20 +31,58 @@ function App() {
               path="/chamados" 
               element={
                 <ProtectedRoute>
-                  <ChamadosPage />
+                  <ErrorBoundary>
+                    <ChamadosListPage />
+                  </ErrorBoundary>
                 </ProtectedRoute>
               } 
             />
             <Route 
-              path="/atendimentos" 
+              path="/chamados/:id" 
               element={
                 <ProtectedRoute>
-                  <AtendimentosPage />
+                  <ErrorBoundary>
+                    <ChamadoDetailPage />
+                  </ErrorBoundary>
                 </ProtectedRoute>
               } 
             />
-            <Route path="/" element={<Navigate to="/chamados" />} />
-            <Route path="*" element={<Navigate to="/chamados" />} />
+            <Route 
+              path="/chamados/novo" 
+              element={
+                <ProtectedRoute>
+                  <ErrorBoundary>
+                    <NovoChamadoPage />
+                  </ErrorBoundary>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+            path="/atendimentos" 
+            element={
+              <ProtectedRoute>
+                <AtendimentosListPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/atendimentos/:id" 
+            element={
+              <ProtectedRoute>
+                <AtendimentoDetailPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/atendimentos/novo" 
+            element={
+              <ProtectedRoute>
+                <NovoAtendimentoPage />
+              </ProtectedRoute>
+            } 
+          />
+          <Route path="/" element={<Navigate to="/chamados" />} />
+          <Route path="*" element={<Navigate to="/chamados" />} />
           </Routes>
         </div>
       </BrowserRouter>
