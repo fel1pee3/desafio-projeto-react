@@ -4,8 +4,8 @@ export default defineConfig({
   guardia: {
     output: {
       target: './src/api/generated/guardia.ts',
-      client: 'axios',
-      mode: 'split',
+      client: 'react-query',
+      mode: 'tags-split',
       mock: false,
       clean: true,
       override: {
@@ -13,6 +13,10 @@ export default defineConfig({
         mutator: {
           path: './src/api/mutator/custom-instance.ts',
           name: 'customInstance',
+        },
+        query: {
+          useQuery: true,
+          useInfinite: false,
         },
       },
     },
