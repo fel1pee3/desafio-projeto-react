@@ -1,7 +1,8 @@
 import Axios, { type AxiosRequestConfig } from 'axios';
 
 export const AXIOS_INSTANCE = Axios.create({ 
-  baseURL: 'https://beta.guardia-api.box3.work'
+  baseURL: 'https://beta.guardia-api.box3.work',
+  timeout: 10000,
 });
 
 // Interceptor para adicionar token

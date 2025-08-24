@@ -18,18 +18,26 @@ export const useChamados = () => {
     setError(null);
 
     try {
+      console.log('Enviando filtros:', filtros);
+      
       const response = await customInstance({
         url: '/api/Chamado/listagem',
         method: 'POST',
         data: filtros,
       }) as any;
 
+      console.log('Resposta da API:', response);
+
       if (response && response.sucesso && response.dados) {
+        // NÃO force a ordenação aqui - a API já deve retornar ordenado
+        // Se precisar ordenar, faça de forma decrescente por dataCadastro
+        const items = response.dados.dados || [];
+        
         return {
           ...response,
           dados: {
             ...response.dados,
-            items: response.dados.dados || [],
+            items: items,
             totalCount: response.dados.totalRegisters || 0
           }
         };
@@ -68,70 +76,68 @@ export const useChamados = () => {
 
   // Criar chamado (CORRIGIDO)
   const criarChamado = async (chamadoDTO: ChamadoDTO): Promise<{ sucesso: boolean; mensagem: string }> => {
-  setIsLoading(true);
-  setError(null);
+    setIsLoading(true);
+    setError(null);
 
-  try {
-    console.log('Enviando chamadoDTO:', chamadoDTO);
-    
-    // USANDO A FUNÇÃO QUE VOCÊ MOSTROU (ajustada)
-    const response = await customInstance<null>(
-      {
+    try {
+      console.log('Enviando chamadoDTO:', JSON.stringify(chamadoDTO, null, 2));
+      
+      const response = await customInstance({
         url: '/api/Chamado',
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
         data: chamadoDTO
+      }) as any;
+
+      console.log('Resposta completa da API:', response);
+      console.log('Status:', response?.status);
+      console.log('Headers:', response?.headers);
+
+      if (response && (response.sucesso || response.status === 200 || response.status === 201)) {
+        return { 
+          sucesso: true, 
+          mensagem: response.mensagem || response.data?.mensagem || 'Chamado criado com sucesso' 
+        };
+      } else {
+        console.error('Resposta inesperada:', response);
+        throw new Error(response?.mensagem || response?.data?.mensagem || 'Resposta inválida da API');
       }
-    ) as any;
-
-    console.log('Resposta da API:', response);
-
-    // A API pode retornar diferentes estruturas de resposta
-    if (response && response.sucesso) {
-      return { 
-        sucesso: true, 
-        mensagem: response.mensagem || 'Chamado criado com sucesso' 
-      };
-    } else if (response && response.dados) {
-      // Outro formato possível de resposta
-      return { 
-        sucesso: true, 
-        mensagem: 'Chamado criado com sucesso' 
-      };
-    } else {
-      throw new Error(response?.mensagem || 'Resposta inválida da API');
-    }
-  } catch (err: any) {
-    console.error('Erro detalhado:', err);
-    
-    let errorMessage = 'Erro ao criar chamado';
-    
-    if (err.response?.data) {
-      // Tenta extrair a mensagem de erro do backend
-      const errorData = err.response.data;
+    } catch (err: any) {
+      console.error('Erro detalhado:', err);
+      console.error('Response data:', err.response?.data);
+      console.error('Response status:', err.response?.status);
       
-      if (errorData.mensagem) {
-        errorMessage = errorData.mensagem;
-      } else if (errorData.errors) {
-        // Erros de validação
-        errorMessage = Object.entries(errorData.errors)
-          .map(([field, messages]) => `${field}: ${(messages as string[]).join(', ')}`)
-          .join('; ');
-      } else if (typeof errorData === 'string') {
-        errorMessage = errorData;
-      } else if (errorData.title) {
-        errorMessage = errorData.title;
+      let errorMessage = 'Erro ao criar chamado';
+      
+      if (err.response?.data) {
+        const errorData = err.response.data;
+        
+        if (errorData.mensagem) {
+          errorMessage = errorData.mensagem;
+        } else if (errorData.errors) {
+          errorMessage = Object.entries(errorData.errors)
+            .map(([field, messages]) => `${field}: ${(messages as string[]).join(', ')}`)
+            .join('; ');
+        } else if (typeof errorData === 'string') {
+          errorMessage = errorData;
+        } else if (errorData.title) {
+          errorMessage = errorData.title;
+        } else {
+          errorMessage = JSON.stringify(errorData);
+        }
+      } else if (err.message) {
+        errorMessage = err.message;
       }
-    } else if (err.message) {
-      errorMessage = err.message;
-    }
 
-    setError(errorMessage);
-    throw new Error(errorMessage);
-  } finally {
-    setIsLoading(false);
-  }
-};
+      setError(errorMessage);
+      throw new Error(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Buscar bairros
   const buscarBairros = async (pesquisa: string): Promise<SelectOption[]> => {

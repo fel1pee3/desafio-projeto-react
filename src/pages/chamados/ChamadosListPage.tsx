@@ -25,17 +25,22 @@ export const ChamadosListPage: React.FC = () => {
 
   const carregarChamados = async () => {
     try {
+      console.log('Carregando chamados com filtros:', filtros);
+      
       const response = await listarChamados(filtros);
+      console.log('Resposta da listagem:', response);
 
       if (response && response.sucesso && response.dados) {
-        let items = response.dados.dados || [];
-        const total = response.dados.totalRegisters || 0;
+        const items = response.dados.items || response.dados.dados || [];
+        const total = response.dados.totalCount || response.dados.totalRegisters || 0;
         const currentPg = response.dados.currentPage || 1;
-        const totalPgs = response.dados.totalPages || 1;
+        const totalPgs = response.dados.totalPages || Math.ceil(total / filtros.pageSize);
 
-        // ✅ Força a ordenação crescente por ID
-        items = items.sort((a: any, b: any) => a.id - b.id);
-        // console.log('Atendimentos recebidos:', items);
+        console.log('Items recebidos:', items.length);
+        console.log('Total registros:', total);
+        console.log('Páginas totais:', totalPgs);
+        console.log('Página atual:', currentPg);
+
         setChamados(items);
         setTotalCount(total);
         setCurrentPage(currentPg);
@@ -44,11 +49,13 @@ export const ChamadosListPage: React.FC = () => {
         console.error('Estrutura de resposta inesperada:', response);
         setChamados([]);
         setTotalCount(0);
+        setTotalPages(1);
       }
     } catch (err) {
       console.error('Erro ao carregar chamados:', err);
       setChamados([]);
       setTotalCount(0);
+      setTotalPages(1);
     }
   };
 

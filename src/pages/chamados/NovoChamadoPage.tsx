@@ -143,7 +143,10 @@ export const NovoChamadoPage: React.FC = () => {
     if (!validateForm()) return;
 
     try {
+      console.log('Enviando formulário:', formData);
+      
       const resultado = await criarChamado(formData);
+      console.log('Resultado da criação:', resultado);
       
       if (resultado.sucesso) {
         alert(resultado.mensagem);
@@ -152,6 +155,7 @@ export const NovoChamadoPage: React.FC = () => {
         setSubmitError(resultado.mensagem);
       }
     } catch (err: any) {
+      console.error('Erro no submit:', err);
       setSubmitError(err.message || 'Erro ao criar chamado');
     }
   };

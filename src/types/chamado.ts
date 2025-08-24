@@ -25,6 +25,7 @@ export interface ChamadoListagemResponse {
   sucesso: boolean;
   mensagem: string;
   dados: {
+    items: Chamado[];
     dados: Chamado[];
     totalCount: number;
     totalRegisters: number;
