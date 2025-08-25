@@ -6,11 +6,13 @@ import { LoadingSpinner } from '../../components/UI/LoadingSpinner';
 
 export const ChamadosListPage: React.FC = () => {
   const [filtros, setFiltros] = useState<ChamadoListagemRequest>({
-    currentPage: 1,
-    pageSize: 10,
-    pesquisa: '',
-    atendido: undefined,
-  });
+  currentPage: 1,
+  pageSize: 10,
+  pesquisa: '',
+  atendido: undefined,
+  orderBy: 'id',
+  orderDirection: 'asc'
+});
   const [chamados, setChamados] = useState<any[]>([]);
   const [, setTotalCount] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
@@ -24,40 +26,59 @@ export const ChamadosListPage: React.FC = () => {
   }, [filtros.currentPage, filtros.pesquisa, filtros.atendido]);
 
   const carregarChamados = async () => {
-    try {
-      console.log('Carregando chamados com filtros:', filtros);
+  try {
+    console.log('Carregando chamados com filtros:', filtros);
+    
+    const response = await listarChamados(filtros);
+    console.log('Resposta da API:', response);
+
+    if (response && response.sucesso && response.dados) {
+      let items = response.dados.items || response.dados.dados || [];
       
-      const response = await listarChamados(filtros);
-      console.log('Resposta da listagem:', response);
+      // ✅ SOLUÇÃO 1: Ordenar por ID crescente
+      items = items.sort((a: any, b: any) => {
+        // Converte para número para garantir ordenação numérica
+        const idA = typeof a.id === 'string' ? parseInt(a.id) : a.id;
+        const idB = typeof b.id === 'string' ? parseInt(b.id) : b.id;
+        return idA - idB;
+      });
 
-      if (response && response.sucesso && response.dados) {
-        const items = response.dados.items || response.dados.dados || [];
-        const total = response.dados.totalCount || response.dados.totalRegisters || 0;
-        const currentPg = response.dados.currentPage || 1;
-        const totalPgs = response.dados.totalPages || Math.ceil(total / filtros.pageSize);
+      // ✅ SOLUÇÃO 2: Ou ordenar por data de cadastro (se quiser por data)
+      // items = items.sort((a: any, b: any) => {
+      //   return new Date(a.dataCadastro).getTime() - new Date(b.dataCadastro).getTime();
+      // });
 
-        console.log('Items recebidos:', items.length);
-        console.log('Total registros:', total);
-        console.log('Páginas totais:', totalPgs);
-        console.log('Página atual:', currentPg);
+      console.log('Items após ordenação:', items);
 
-        setChamados(items);
-        setTotalCount(total);
-        setCurrentPage(currentPg);
-        setTotalPages(totalPgs);
-      } else {
-        console.error('Estrutura de resposta inesperada:', response);
-        setChamados([]);
-        setTotalCount(0);
-        setTotalPages(1);
+      const total = response.dados.totalCount || response.dados.totalRegisters || 0;
+      const currentPg = response.dados.currentPage || 1;
+      const totalPgs = response.dados.totalPages || Math.ceil(total / filtros.pageSize);
+
+      // ✅ CORREÇÃO: Ajuste para mostrar a paginação correta
+      // Se a página 5 está vazia mas deveria ter itens, ajustamos
+      if (currentPg > totalPgs && totalPgs > 0) {
+        // Se a página atual é maior que o total de páginas, volta para a última página
+        setFiltros(prev => ({ ...prev, currentPage: totalPgs }));
+        return;
       }
-    } catch (err) {
-      console.error('Erro ao carregar chamados:', err);
+
+      setChamados(items);
+      setTotalCount(total);
+      setCurrentPage(currentPg);
+      setTotalPages(totalPgs);
+    } else {
+      console.error('Estrutura de resposta inesperada:', response);
       setChamados([]);
       setTotalCount(0);
       setTotalPages(1);
     }
-  };
+  } catch (err) {
+    console.error('Erro ao carregar chamados:', err);
+    setChamados([]);
+    setTotalCount(0);
+    setTotalPages(1);
+  }
+};
 
   const handlePesquisaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFiltros((prev) => ({ ...prev, pesquisa: e.target.value, currentPage: 1 }));
@@ -243,19 +264,23 @@ export const ChamadosListPage: React.FC = () => {
               Anterior
             </button>
 
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-              <button
-                key={page}
-                onClick={() => handlePageChange(page)}
-                className={`px-3 py-1 rounded-md ${
-                  page === currentPage
-                    ? 'bg-primary text-white'
-                    : 'border border-gray-300'
-                }`}
-              >
-                {page}
-              </button>
-            ))}
+            {/* Mostra apenas páginas que existem */}
+            {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+              const page = i + 1;
+              return (
+                <button
+                  key={page}
+                  onClick={() => handlePageChange(page)}
+                  className={`px-3 py-1 rounded-md ${
+                    page === currentPage
+                      ? 'bg-primary text-white'
+                      : 'border border-gray-300'
+                  }`}
+                >
+                  {page}
+                </button>
+              );
+            })}
 
             <button
               onClick={() => handlePageChange(currentPage + 1)}

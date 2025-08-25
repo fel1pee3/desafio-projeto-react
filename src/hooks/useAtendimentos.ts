@@ -67,15 +67,20 @@ export const useAtendimentos = () => {
     }
   };
 
-  const finalizarAtendimento = async (atendimentoId: string): Promise<void> => {
+  const finalizarAtendimento = async (atendimentoId: string): Promise<any> => {
     setIsLoading(true);
     setError(null);
 
     try {
-      await customInstance({
-        url: `/api/Atendimento/Finalizar?AtendimentoId=${atendimentoId}`,
+      const response = await customInstance({
+        url: `/api/Atendimento/Finalizar`,
         method: 'GET',
+        params: {
+          AtendimentoId: atendimentoId
+        }
       });
+
+      return response;
     } catch (err: any) {
       const errorMessage = err.response?.data?.mensagem || err.message || 'Erro ao finalizar atendimento';
       setError(errorMessage);

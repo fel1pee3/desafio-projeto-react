@@ -19,6 +19,8 @@ export interface ChamadoListagemRequest {
   pageSize: number;
   pesquisa?: string;
   atendido?: boolean;
+  orderBy?: string; // 'id' ou 'dataCadastro'
+  orderDirection?: 'asc' | 'desc'; // 'asc' para crescente
 }
 
 export interface ChamadoListagemResponse {
